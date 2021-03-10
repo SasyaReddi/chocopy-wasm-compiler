@@ -100,14 +100,14 @@ export function augmentEnv(
   for (let index = lastCount + 1; index <= forCount; index++) {
     // NOTE(alex:mm): I'm assuming these are global variables?
     const rngAddr = mm.staticAlloc(4n);
-    newGlobals.set("rng" + index, rngAddr);
+    newGlobals.set("rng" + index, Number(rngAddr));
     mm.addGlobal(rngAddr);
   }
   // set bars for indexing in for loops
   for (let index = lastCount + 1; index <= forCount; index++) {
     // NOTE(alex:mm): I'm assuming these are global variables?
     const idxAddr = mm.staticAlloc(4n);
-    newGlobals.set("idx" + index, idxAddr);
+    newGlobals.set("idx" + index, Number(idxAddr));
     mm.addGlobal(idxAddr);
   }
   // for rg
