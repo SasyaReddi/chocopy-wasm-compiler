@@ -443,21 +443,20 @@ function codeGenStmt(stmt: Stmt<[Type, Location]>, env: GlobalEnv): Array<string
           //   ];
           // }
 
-          // TODO(alex:mm): temp guards & join removal
-          return [
-            `
-            ${Code_iass.join("\n")}
-
-            (block
-              (loop
-                ${Code_idstep.join("\n")}
-                (br_if 1 ${Code_cond.join("\n")} ${decodeLiteral.join("\n")})
-
-                ${Code_ass.join("\n")}
-                ${bodyStmts.join("\n")}
-                (br 0)
-            ))`,
-          ];
+          // NOTE(alex): need temp guards so GC doesn't accidently cleanup temporaries
+          // NOTE(alex): keep the instructions as flat as possible for `augmentFnGc()`
+          //   (i.e. no join("\n") on non-top-level codegen)
+          return codeGenTempGuard([
+            ...Code_iass,
+            `(block`,
+            `  (loop`,
+            ...Code_idstep,
+            ...[`(br_if 1`, ...Code_cond, ...decodeLiteral],
+            ...Code_ass,
+            ...bodyStmts,
+            `(br 0)`,
+            `))`,
+          ], FENCE_TEMPS);
         case "call":
           // must be range()
           var iter = codeGenExpr(stmt.iterable, env);
@@ -598,25 +597,25 @@ function codeGenStmt(stmt: Stmt<[Type, Location]>, env: GlobalEnv): Array<string
           // ${Code_cur.join("\n")}(call $print_num)(local.set $$last)
           // ${Code_stop.join("\n")}(call $print_num)(local.set $$last)
           // ${Code_step_expr.join("\n")}(call $print_num)(local.set $$last)
-          // TODO(alex:mm): temp guards & join removal
-          return [
-            `
-            (i32.const ${envLookup(env, "rng" + stmt.id)})
-            ${iter.join("\n")}
-            (i32.store)
-            ${Code_cur_iniass.join("\n")}
 
-            (block
-              (loop
-                ${Code_step.join("\n")}
-                (br_if 1 ${Code_cond.join("\n")} ${decodeLiteral.join("\n")})
+          // NOTE(alex): need temp guards so GC doesn't accidently cleanup temporaries
+          // NOTE(alex): keep the instructions as flat as possible for `augmentFnGc()`
+          //   (i.e. no join("\n") on non-top-level codegen)
+          return codeGenTempGuard([
+            `(i32.const ${envLookup(env, "rng" + stmt.id)})`,
+            ...iter,
+            `(i32.store)`,
+            ...Code_cur_iniass,
+            `(block`,
+            `  (loop`,
+            ...Code_step,
+            ...[`(br_if 1`, ...Code_cond, ...decodeLiteral],
 
-                ${Code_ass.join("\n")}
-                ${bodyStmts.join("\n")}
-
-                (br 0)
-            ))`,
-          ];
+            ...Code_ass,
+            ...bodyStmts,
+            `(br 0)`,
+            `))`,
+          ], FENCE_TEMPS);
         default:
           throw new BaseException.InternalException("wrong tag for iterable");
       }
