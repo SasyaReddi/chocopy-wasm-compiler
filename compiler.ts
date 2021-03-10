@@ -451,7 +451,7 @@ function codeGenStmt(stmt: Stmt<[Type, Location]>, env: GlobalEnv): Array<string
             `(block`,
             `  (loop`,
             ...Code_idstep,
-            ...[`(br_if 1`, ...Code_cond, ...decodeLiteral],
+            ...[`(br_if 1`, ...Code_cond, ...decodeLiteral, `)`],
             ...Code_ass,
             ...bodyStmts,
             `(br 0)`,
@@ -609,7 +609,7 @@ function codeGenStmt(stmt: Stmt<[Type, Location]>, env: GlobalEnv): Array<string
             `(block`,
             `  (loop`,
             ...Code_step,
-            ...[`(br_if 1`, ...Code_cond, ...decodeLiteral],
+            ...[`(br_if 1`, ...Code_cond, ...decodeLiteral, ')'],
 
             ...Code_ass,
             ...bodyStmts,
